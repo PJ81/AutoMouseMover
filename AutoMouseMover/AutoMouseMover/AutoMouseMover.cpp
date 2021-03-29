@@ -25,7 +25,7 @@ COORD getPos(HANDLE c) {
 	return p;
 }
 
-void moveTheMouse(int wait) {
+void moveTheMouse(int delay) {
 
 	// centers cursor in main screen
 	RECT rc;
@@ -40,9 +40,9 @@ void moveTheMouse(int wait) {
 	// creates a coord var to print text at
 	COORD pos = getPos(output);
 	while (true) {
-		int t = wait;
+		int t = delay;
 
-		// waits 'wait' seconds
+		// waits 'delay' seconds
 		while (t > 0) {
 			
 			SetConsoleCursorPosition(output, pos);
@@ -70,10 +70,16 @@ void moveTheMouse(int wait) {
 	}
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
+	int delay = 15;
+	// search for argument delay
+	if (argc > 1) {
+		if (strcmp(argv[1], "-d") == 0) {
+			delay = atoi(argv[2]);
+		}
+	}
 	// creates a thread
-	std::thread moveTheMouse(moveTheMouse, (argc > 1) ? atoi(argv[1]) : 15);
+	std::thread moveTheMouse(moveTheMouse, delay);
 	// starts it
 	moveTheMouse.join();
 	return 0;
