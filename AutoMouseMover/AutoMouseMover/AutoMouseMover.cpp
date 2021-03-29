@@ -17,6 +17,14 @@ void moveCursor(int x, int y) {
 	SendInput(1, &input, sizeof(input));
 }
 
+COORD getPos(HANDLE c) {
+	CONSOLE_SCREEN_BUFFER_INFO ci;
+	GetConsoleScreenBufferInfo(c, &ci);
+	COORD p = ci.dwCursorPosition;
+	p.X = 0; p.Y += 2;
+	return p;
+}
+
 void moveTheMouse(int wait) {
 
 	// centers cursor in main screen
@@ -30,17 +38,15 @@ void moveTheMouse(int wait) {
 	// gets console handle
 	HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
 	// creates a coord var to print text at
-	COORD pos = { 0, 2 };
-
-	std::cout << "Mouse will move every " << wait << " seconds.\n\n";
-
+	COORD pos = getPos(output);
 	while (true) {
 		int t = wait;
 
 		// waits 'wait' seconds
 		while (t > 0) {
+			
 			SetConsoleCursorPosition(output, pos);
-			std::cout << "Seconds: " << t << "  \n";
+			std::cout << "Mouse will move in " << t << " seconds\n";
 			// waits 1 second
 			Sleep(1000);
 			t--;
@@ -48,11 +54,10 @@ void moveTheMouse(int wait) {
 
 		// output msg
 		SetConsoleCursorPosition(output, pos);
-		std::cout << "Seconds: 0\n";
+		std::cout << "Moving!                                            \n";
 
 		// moves the cursor in a circle
 		for (float x = 0; x < 6.3f; x += 0.3f) {
-
 			// move the cursor
 			moveCursor((int)(std::cosf(x) * 15), (int)(std::sinf(x) * 15));
 
