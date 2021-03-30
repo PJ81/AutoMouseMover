@@ -17,70 +17,79 @@ void moveCursor(int x, int y) {
 	SendInput(1, &input, sizeof(input));
 }
 
-COORD getPos(HANDLE c) {
-	CONSOLE_SCREEN_BUFFER_INFO ci;
-	GetConsoleScreenBufferInfo(c, &ci);
-	COORD p = ci.dwCursorPosition;
-	p.X = 0; p.Y += 2;
-	return p;
-}
-
 void moveTheMouse(int delay) {
 
-	// centers cursor in main screen
+	// calculates the center of the main screen and set cursor there
 	RECT rc;
 	HWND dt = GetDesktopWindow();
 	GetWindowRect(dt, &rc);
-	int a = (rc.right - rc.left) / 2,
-		b = (rc.bottom - rc.top) / 2;
+	int a = (rc.right - rc.left) / 2, b = (rc.bottom - rc.top) / 2;
 	SetCursorPos(a, b);
+	
+	POINT currentCursorPos, lastPos = { a, b };
+	
+	// gets console handle and sets text coord to 2 rows under the last text coord
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO ci;
+	GetConsoleScreenBufferInfo(console, &ci);
+	COORD pos = ci.dwCursorPosition;
+	pos.X = 0; pos.Y += 2;
 
-	// gets console handle
-	HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
-	// creates a coord var to print text at
-	COORD pos = getPos(output);
+	// infinit loop!
 	while (true) {
 		int t = delay;
 
 		// waits 'delay' seconds
 		while (t > 0) {
-			
-			SetConsoleCursorPosition(output, pos);
+			// positioning the write cursor
+			SetConsoleCursorPosition(console, pos);
+			// output msg
 			std::cout << "Mouse will move in " << t << " seconds\n";
 			// waits 1 second
 			Sleep(1000);
 			t--;
 		}
 
-		// output msg
-		SetConsoleCursorPosition(output, pos);
-		std::cout << "Moving!                                            \n";
+		// get current cursor position
+		GetCursorPos(&currentCursorPos);
+		
+		// if cursor did not move since last time, move it
+		if (currentCursorPos.x == lastPos.x && currentCursorPos.y == lastPos.y) {
+			// output msg
+			SetConsoleCursorPosition(console, pos);
+			std::cout << "Moving!                                            \n";
 
-		// moves the cursor in a circle
-		for (float x = 0; x < 6.3f; x += 0.3f) {
-			// move the cursor
-			moveCursor((int)(std::cosf(x) * 15), (int)(std::sinf(x) * 15));
+			// moves the cursor in a circle
+			for (float x = 0; x < 6.3f; x += 0.3f) {
+				// move the cursor
+				moveCursor((int)(std::cosf(x) * 15), (int)(std::sinf(x) * 15));
 
-			// slows the execution a lil bit
-			Sleep(100);
+				// slows the execution a lil bit
+				Sleep(100);
+			}
+
+			// sets cursor position at the center of main screeen
+			SetCursorPos(a, b);
+
+		} else {
+			// update last position
+			lastPos.x = currentCursorPos.x;
+			lastPos.y = currentCursorPos.y;
 		}
-
-		// sets cursor position at the center of main screeen
-		SetCursorPos(a, b);
 	}
 }
 
 int main(int argc, char** argv) {
 	int delay = 15;
-	// search for argument delay
+	// search for argument delay: -d
 	if (argc > 1) {
 		if (strcmp(argv[1], "-d") == 0) {
 			delay = atoi(argv[2]);
 		}
 	}
-	// creates a thread
+	// creates and starts a new thread
 	std::thread moveTheMouse(moveTheMouse, delay);
-	// starts it
 	moveTheMouse.join();
+
 	return 0;
 }
